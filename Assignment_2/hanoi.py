@@ -68,7 +68,10 @@ class TowerOfHanoi:
         Returns:
             boolean: Returns True if disks (numbers) are in descending order on the third peg and False otherwise.
         """
-        goal = list(range(self.number_of_disks, 0, -1))
+        goal = []
+        for disk in range(self.number_of_disks, 0, -1):
+            goal.append(disk)
+
         return self.pegs[2] == goal
 
     def reset(self):
@@ -105,3 +108,97 @@ class TTTowerOfHanoi(TowerOfHanoi):
         for size in range(self.number_of_disks, 0, -1):
             for copy in range(3):
                 self.pegs[0].append(size)
+                
+                
+class SpecialDiskTowerOfHanoi(TowerOfHanoi):
+    SPECIAL = "_"
+ 
+    def __init__(self, number_of_disks = 4, k = 0):
+        self.k = k
+        super().__init__(number_of_disks)
+ 
+    def reset(self):
+        self.pegs = [[], [], []]
+ 
+        for disk in range(self.number_of_disks, 0, -1):
+            self.pegs[0].append(disk)
+ 
+        self.pegs[1].append(self.SPECIAL)
+ 
+    def move(self, source, destination):
+        if source not in (0, 1, 2) or destination not in (0, 1, 2):
+            return False
+ 
+        if source == destination:
+            return False
+ 
+        if len(self.pegs[source]) == 0:
+            return False
+ 
+        disk = self.pegs[source][-1]
+        dest_peg = self.pegs[destination]
+ 
+        if disk == self.SPECIAL:
+            pass
+        elif len(dest_peg) > 0:
+            top = dest_peg[-1]
+            if top == self.SPECIAL:
+                if disk > self.k:
+                    return False
+            elif top < disk:
+                return False
+ 
+        self.pegs[source].pop()
+        self.pegs[destination].append(disk)
+        return True
+ 
+    def is_goal(self):
+        goal = []
+        for disk in range(self.number_of_disks, 0, -1):
+            goal.append(disk)
+    
+        numbered_disks = []
+        for disk in self.pegs[2]:
+            if disk != self.SPECIAL:
+                numbered_disks.append(disk)
+    
+        return numbered_disks == goal
+
+def play_game():
+    version = input("Which version would you like to play? o (Original version), t (Triple version), or s (Special version): ")
+    number_of_disks = int(input("How many disks would you like? "))
+
+    if version == "s":
+        k = int(input("What should k be? "))
+
+    if version == "t":
+        game = TTTowerOfHanoi(number_of_disks)
+    elif version == "s":
+        game = SpecialDiskTowerOfHanoi(number_of_disks, k)
+    else:
+        game = TowerOfHanoi(number_of_disks)
+
+    move_count = 0
+    start_time = time.time()
+    game.print_state()
+
+    while not game.is_goal():
+        move = input("Enter your move as source,destination. e.g. 0,2: ")
+        move_parts = move.split(",")
+        source = int(move_parts[0])
+        destination = int(move_parts[1])
+
+        legal = game.move(source, destination)
+        print("Legal move: " + str(legal))
+
+        if legal:
+            move_count = move_count + 1
+
+        game.print_state()
+
+    end_time = time.time()
+    elapsed_seconds = end_time - start_time
+
+    print("You win!")
+    print("Number of moves: " + str(move_count))
+    print("Time: " + str(elapsed_seconds) + " seconds")
