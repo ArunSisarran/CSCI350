@@ -38,7 +38,6 @@ class TowerOfHanoi:
         Returns:
             boolean: Returns True if the move was made and False otherwise.
         """
-        top_disk = self.pegs[source][-1]
 
         if source not in (0, 1, 2) or destination not in (0, 1, 2):
             return False
@@ -49,6 +48,8 @@ class TowerOfHanoi:
         if len(self.pegs[source]) == 0:
             return False
  
+        disk = self.pegs[source][-1]
+        
         if len(self.pegs[destination]) > 0 and self.pegs[destination][-1] < disk:
             return False
  
@@ -202,3 +203,6 @@ def play_game():
     print("You win!")
     print("Number of moves: " + str(move_count))
     print("Time: " + str(elapsed_seconds) + " seconds")
+
+if __name__ == "__main__":
+    play_game()
