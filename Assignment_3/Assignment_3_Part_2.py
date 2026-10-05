@@ -36,28 +36,28 @@ class Problem(object):
             type(self).__name__, self.initial, self.goal)
 
 class Boat(Problem):
-
+ 
     def __init__(self, initial=(3, 3, 0, 0, True), goal=(0, 0, 3, 3, False), capacity=3):
         Problem.__init__(self, initial=initial, goal=goal, capacity=capacity)
-
+ 
     def side_is_safe(self, students, villains):
         if students == 0:
             return True
         return villains <= students
-
+ 
     def state_is_safe(self, state):
         students_si, villains_si, students_man, villains_man, boat_at_si = state
         return (self.side_is_safe(students_si, villains_si) and
                 self.side_is_safe(students_man, villains_man))
-
+ 
     def actions(self, state):
         students_si, villains_si, students_man, villains_man, boat_at_si = state
-
+ 
         if boat_at_si:
             students_here, villains_here = students_si, villains_si
         else:
             students_here, villains_here = students_man, villains_man
-
+ 
         legal_moves = []
         for students in range(students_here + 1):
             for villains in range(villains_here + 1):
@@ -68,24 +68,26 @@ class Boat(Problem):
                 if self.state_is_safe(new_state):
                     legal_moves.append((students, villains))
         return legal_moves
-
+ 
     def result(self, state, action):
         students_si, villains_si, students_man, villains_man, boat_at_si = state
         students, villains = action
-
+ 
         if boat_at_si:
             return (students_si - students, villains_si - villains,
                     students_man + students, villains_man + villains, False)
         else:
             return (students_si + students, villains_si + villains,
                     students_man - students, villains_man - villains, True)
-
+ 
     def is_goal(self, state):
-        return state[0] == 0 and state[1] == 0
-
+        students_si, villains_si, students_man, villains_man, boat_at_si = state
+        return (students_si == 0 and villains_si == 0 and
+                students_man == 3 and villains_man == 3 and not boat_at_si)
+ 
     def action_cost(self, s, a, s1):
         return 1
-
+ 
     def h(self, node):
         students_si, villains_si, students_man, villains_man, boat_at_si = node.state
         people_left = students_si + villains_si
@@ -95,3 +97,4 @@ class Boat(Problem):
         if not boat_at_si:
             trips += 1
         return trips
+
