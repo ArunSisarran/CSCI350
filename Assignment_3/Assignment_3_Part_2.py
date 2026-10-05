@@ -1,3 +1,5 @@
+import math
+
 connections = {
     ('O', 'Z'):  71, ('O', 'S'): 151, ('A', 'Z'): 75, ('A', 'S'): 140, ('A', 'T'): 118,
     ('L', 'T'): 111, ('L', 'M'):  70, ('D', 'M'): 75, ('C', 'D'): 120, ('C', 'R'): 146,
@@ -12,7 +14,6 @@ cities = {
     'M': (160, 343), 'N': (407, 561), 'O': (117, 580), 'P': (311, 372), 'R': (227, 412),
     'S': (187, 463), 'T': ( 83, 414), 'U': (471, 363), 'V': (535, 473), 'Z': ( 92, 539),
     'J': (183, 279)}
-
 
 class Problem(object):
     """The abstract class for a formal problem. A new domain subclasses this,
@@ -34,39 +35,63 @@ class Problem(object):
         return '{}({!r}, {!r})'.format(
             type(self).__name__, self.initial, self.goal)
 
-
 class Boat(Problem):
- 
+
     def __init__(self, initial=(3, 3, 0, 0, True), goal=(0, 0, 3, 3, False), capacity=3):
         Problem.__init__(self, initial=initial, goal=goal, capacity=capacity)
- 
-    def safe(self, s, v):
-        return s == 0 or v <= s
- 
-    def is_safe(self, state):
-        ss, vs, sm, vm, L = state
-        return self.safe(ss, vs) and self.safe(sm, vm)
- 
+
+    def side_is_safe(self, students, villains):
+        if students == 0:
+            return True
+        return villains <= students
+
+    def state_is_safe(self, state):
+        students_si, villains_si, students_man, villains_man, boat_at_si = state
+        return (self.side_is_safe(students_si, villains_si) and
+                self.side_is_safe(students_man, villains_man))
+
     def actions(self, state):
-        ss, vs, sm, vm, L = state
-        here_s, here_v = (ss, vs) if L else (sm, vm)
-        return [(s, v) for s in range(here_s + 1) for v in range(here_v + 1)
-                if 1 <= s + v <= self.capacity and self.is_safe(self.result(state, (s, v)))]
- 
+        students_si, villains_si, students_man, villains_man, boat_at_si = state
+
+        if boat_at_si:
+            students_here, villains_here = students_si, villains_si
+        else:
+            students_here, villains_here = students_man, villains_man
+
+        legal_moves = []
+        for students in range(students_here + 1):
+            for villains in range(villains_here + 1):
+                riders = students + villains
+                if riders < 1 or riders > self.capacity:
+                    continue
+                new_state = self.result(state, (students, villains))
+                if self.state_is_safe(new_state):
+                    legal_moves.append((students, villains))
+        return legal_moves
+
     def result(self, state, action):
-        ss, vs, sm, vm, L = state
-        s, v = action
-        if L:
-            return (ss - s, vs - v, sm + s, vm + v, False)
-        return (ss + s, vs + v, sm - s, vm - v, True)
- 
+        students_si, villains_si, students_man, villains_man, boat_at_si = state
+        students, villains = action
+
+        if boat_at_si:
+            return (students_si - students, villains_si - villains,
+                    students_man + students, villains_man + villains, False)
+        else:
+            return (students_si + students, villains_si + villains,
+                    students_man - students, villains_man - villains, True)
+
     def is_goal(self, state):
         return state[0] == 0 and state[1] == 0
- 
+
     def action_cost(self, s, a, s1):
         return 1
- 
+
     def h(self, node):
-        ss, vs, sm, vm, L = node.state
-        n = ss + vs
-        return 0 if n == 0 else -(-n // 3) + (0 if L else 1)
+        students_si, villains_si, students_man, villains_man, boat_at_si = node.state
+        people_left = students_si + villains_si
+        if people_left == 0:
+            return 0
+        trips = math.ceil(people_left / self.capacity)
+        if not boat_at_si:
+            trips += 1
+        return trips
